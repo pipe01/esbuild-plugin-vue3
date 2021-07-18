@@ -4,18 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "esbuild build.ts --outfile=build.mjs --platform=node --sourcemap"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@primer/css": "^17.4.0",
     "@vue/compiler-sfc": "^3.1.5",
     "esbuild": "^0.12.15",
+    "esbuild-sass-plugin": "^1.4.8",
     "pug": "^3.0.2",
     "sass": "^1.35.2",
     "vue": "^3.1.5"
   },
   "devDependencies": {
-    "@types/pug": "^2.0.5"
+    "@types/pug": "^2.0.5",
+    "@types/sass": "^1.16.1"
   }
 }

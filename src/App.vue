@@ -1,12 +1,12 @@
 <template lang="pug">
-h1 Hello world
+h1 Hello world asd
 Button
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import Button from "./MyButton.vue";
+import Button from "@/MyButton.vue";
 
 export default defineComponent({
     components: {

@@ -1,6 +1,6 @@
 <template>
 <h1>This is green</h1>
-<button @click="count++">Count is {{count}}</button>
+<button @click="() => {throw 213}">Count is {{count}}</button>
 </template>
 
 <script lang="ts">

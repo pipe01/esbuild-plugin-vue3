@@ -1,38 +1,11 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "strict": true,
-    "jsx": "preserve",
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "experimentalDecorators": true,
-    "skipLibCheck": true,
+    "module": "commonjs",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+    "target": "es6",
+    "moduleResolution": "node",
     "sourceMap": true,
-    "baseUrl": ".",
-    "types": [],
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    },
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ]
+    "outDir": "dist"
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "lib": ["es2015"]
 }
