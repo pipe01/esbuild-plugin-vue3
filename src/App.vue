@@ -1,11 +1,17 @@
-<template>
-<h1>Hello world</h1>
+<template lang="pug">
+h1 Hello world
+Button
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 
+import Button from "./MyButton.vue";
+
 export default defineComponent({
+    components: {
+        Button
+    },
     setup() {
         return {
             nice: "asd"
@@ -14,8 +20,9 @@ export default defineComponent({
 })
 </script>
 
-<style scoped>
-h1 {
-    color: red;
-}
+<style scoped lang="sass">
+@import "./style"
+
+h1
+    color: $my-color
 </style>
