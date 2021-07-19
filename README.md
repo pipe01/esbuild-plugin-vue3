@@ -8,5 +8,6 @@ This plugin is meant to mimick the default [Vue CLI](https://cli.vuejs.org/) beh
 * JavaScript and TypeScript `<script>` and `<script setup>` (the latter is still experimental)
 * CSS, SCSS and SASS `<style>`
 * Path aliases from tsconfig.json, e.g. `import "@/Component.vue"` resolves to `import "../../Component.vue`
+* Emit HTML file and inject output CSS and JS files
 
 ### The library is still not thoroughly tested, use at your own risk.
