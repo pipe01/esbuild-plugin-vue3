@@ -2,13 +2,16 @@
   "compilerOptions": {
     "module": "commonjs",
     "esModuleInterop": true,
-    "target": "es6",
+    "target": "es5",
     "moduleResolution": "node",
     "sourceMap": true,
+    "strict": true,
     "outDir": "dist",
+    "declaration": true,
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
   },
-  "lib": ["es2015"]
+  "lib": ["es2015"],
+  "include": ["src/*.ts"]
 }

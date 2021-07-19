@@ -1,17 +1,25 @@
-import esbuild from "esbuild";
-import path from "path";
-import fs from 'fs';
+import * as esbuild from "esbuild";
+import * as path from "path";
+import * as fs from 'fs';
 
-import sfc from '@vue/compiler-sfc';
-import pug from "pug";
-import sass from "sass";
+import * as sfc from '@vue/compiler-sfc';
+import * as pug from "pug";
+import * as sass from "sass";
 
 import { loadRules, replaceRules } from "./paths";
 import { fileExists, getUrlParams } from "./utils"
 
-const aliasPlugin: esbuild.Plugin = {
-    name: "alias",
+const vuePlugin: esbuild.Plugin = {
+    name: "vue",
     async setup(build) {
+        build.initialOptions.define = {
+            ...build.initialOptions.define,
+            "__VUE_OPTIONS_API__": "false",
+            "__VUE_PROD_DEVTOOLS__": "false"
+        }
+
+        let idCounter = 1000;
+
         await loadRules();
         
         build.onResolve({ filter: /.*/ }, async args => {
@@ -39,19 +47,6 @@ const aliasPlugin: esbuild.Plugin = {
                 }
             }
         })
-    }
-}
-
-const vuePlugin: esbuild.Plugin = {
-    name: "vue",
-    setup(build) {
-        build.initialOptions.define = {
-            ...build.initialOptions.define,
-            "__VUE_OPTIONS_API__": "false",
-            "__VUE_PROD_DEVTOOLS__": "false"
-        }
-
-        let idCounter = 1000;
 
         // Resolve main ".vue" import
         build.onResolve({ filter: /\.vue/ }, async (args) => {
@@ -143,7 +138,7 @@ const vuePlugin: esbuild.Plugin = {
                 id,
                 source,
                 filename: args.path,
-                scoped: descriptor.styles.some(o => o.scoped)
+                scoped: descriptor.styles.some((o: any) => o.scoped)
             });
 
             return {
@@ -158,7 +153,7 @@ const vuePlugin: esbuild.Plugin = {
 
             const style: import("@vue/compiler-sfc").SFCStyleBlock = descriptor.styles[index];
             let source = style.content;
-            let includedFiles = [];
+            let includedFiles: string[] = [];
 
             if (style.lang === "sass" || style.lang === "scss") {
                 const result: sass.Result = await new Promise((resolve, reject) => sass.render({
@@ -202,29 +197,4 @@ const vuePlugin: esbuild.Plugin = {
     }
 };
 
-const buildOpts: esbuild.BuildOptions = {
-    entryPoints: ['src/main-client.ts'],
-    bundle: true,
-    outfile: 'dist/out.js',
-    plugins: [aliasPlugin, vuePlugin],
-    target: "es2015",
-    // platform: "node",
-    sourcemap: true,
-    // minify: true
-}
-
-if (process.argv.includes("--serve")) {
-    esbuild.serve({
-        servedir: "dist",
-        port: 8080
-    }, buildOpts)
-    
-    console.log("Serving on http://localhost:8080");
-} else {
-    if (process.argv.includes("-w")) {
-        buildOpts.watch = true;
-        console.log("Watching for changes");
-    }
-
-    esbuild.build(buildOpts).catch(o => console.error(o))
-}
+export = vuePlugin;

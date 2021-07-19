@@ -1,4 +1,4 @@
-import fs from 'fs';
+import * as fs from 'fs';
 
 export function getUrlParams(search: string): Record<string, string> {
     let hashes = search.slice(search.indexOf('?') + 1).split('&')

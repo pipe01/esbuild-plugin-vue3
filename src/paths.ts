@@ -1,5 +1,5 @@
 import { fileExists } from "./utils";
-import fs from 'fs';
+import * as fs from 'fs';
 
 type Rule = { regex: RegExp, replacement: string }
 
