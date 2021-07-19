@@ -36,3 +36,11 @@ export async function loadRules() {
         })
     }
 }
+
+export function replaceRules(path: string): string {
+    for (const rule of rules) {
+        path = path.replace(rule.regex, rule.replacement);
+    }
+
+    return path;
+}

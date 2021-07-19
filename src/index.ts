@@ -2,13 +2,20 @@ import esbuild from "esbuild";
 import path from "path";
 import fs from 'fs';
 
+import sfc from '@vue/compiler-sfc';
+import pug from "pug";
+import sass from "sass";
+
+import { loadRules, replaceRules } from "./paths";
 import { fileExists, getUrlParams } from "./utils"
 
 const aliasPlugin: esbuild.Plugin = {
     name: "alias",
-    setup(build) {
+    async setup(build) {
+        await loadRules();
+        
         build.onResolve({ filter: /.*/ }, async args => {
-            const aliased = replacePrefix(args.path);
+            const aliased = replaceRules(args.path);
             const fullPath = path.isAbsolute(aliased) ? aliased : path.join(args.resolveDir, aliased);
             
             if (!await fileExists(fullPath)) {
@@ -34,10 +41,6 @@ const aliasPlugin: esbuild.Plugin = {
         })
     }
 }
-
-import sfc from '@vue/compiler-sfc';
-import pug from "pug";
-import sass from "sass";
 
 const vuePlugin: esbuild.Plugin = {
     name: "vue",
@@ -174,7 +177,7 @@ const vuePlugin: esbuild.Plugin = {
 
                             return null
                         },
-                        url => ({ file: replacePrefix(url) })
+                        url => ({ file: replaceRules(url) })
                     ]
                 }, (ex, res) => ex ? reject(ex) : resolve(res)));
 
