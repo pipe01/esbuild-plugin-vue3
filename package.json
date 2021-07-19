@@ -1,18 +1,16 @@
 {
-  "name": "esbuild-vue3",
-  "version": "1.0.0",
+  "name": "esbuild-plugin-vue3",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild build.ts --outfile=build.mjs --platform=node --sourcemap"
+    "build": "tsc"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "pipe01",
+  "license": "MIT",
   "dependencies": {
-    "@primer/css": "^17.4.0",
     "@vue/compiler-sfc": "^3.1.5",
     "esbuild": "^0.12.15",
-    "esbuild-sass-plugin": "^1.4.8",
     "pug": "^3.0.2",
     "sass": "^1.35.2",
     "vue": "^3.1.5"
