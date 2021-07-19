@@ -1,6 +1,7 @@
 import * as esbuild from "esbuild";
 import * as path from "path";
 import * as fs from 'fs';
+import * as crypto from "crypto";
 
 import * as sfc from '@vue/compiler-sfc';
 import * as pug from "pug";
@@ -18,17 +19,17 @@ const vuePlugin: esbuild.Plugin = {
             "__VUE_PROD_DEVTOOLS__": "false"
         }
 
-        let idCounter = 1000;
-
         await loadRules();
         
         build.onResolve({ filter: /.*/ }, async args => {
             const aliased = replaceRules(args.path);
-            const fullPath = path.isAbsolute(aliased) ? aliased : path.join(args.resolveDir, aliased);
-            
+            const fullPath = path.isAbsolute(aliased) ? aliased : path.join(process.cwd(), aliased);
+
             if (!await fileExists(fullPath)) {
                 const possible = [
+                    ".ts",
                     "/index.ts",
+                    ".js",
                     "/index.js",
                 ]
 
@@ -40,9 +41,9 @@ const vuePlugin: esbuild.Plugin = {
                         }
                     }
                 }
-            } else if (aliased != args.path) {
+            } else {
                 return {
-                    path: path.normalize(aliased),
+                    path: path.normalize(fullPath),
                     namespace: "file"
                 }
             }
@@ -76,7 +77,7 @@ const vuePlugin: esbuild.Plugin = {
                 filename
             });
 
-            const id = "data-v-" + idCounter++;
+            const id = "data-v-" + crypto.randomBytes(4).toString("hex");
             let code = "";
 
             if (descriptor.script || descriptor.scriptSetup) {
