@@ -8,6 +8,7 @@
     "strict": true,
     "outDir": "dist",
     "declaration": true,
+    "declarationMap": true,
     "paths": {
       "@/*": ["./src/*"]
     },
