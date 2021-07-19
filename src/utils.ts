@@ -1,4 +1,6 @@
 import * as fs from 'fs';
+import { OnResolveArgs } from "esbuild";
+import * as path from "path";
 
 export function getUrlParams(search: string): Record<string, string> {
     let hashes = search.slice(search.indexOf('?') + 1).split('&')
@@ -15,4 +17,8 @@ export async function fileExists(path: fs.PathLike) {
     } catch (err) {
         return false;
     }
+}
+
+export function getFullPath(args: OnResolveArgs) {
+    return path.isAbsolute(args.path) ? args.path : path.join(args.resolveDir, args.path);
 }

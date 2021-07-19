@@ -8,53 +8,57 @@ import * as pug from "pug";
 import * as sass from "sass";
 
 import { loadRules, replaceRules } from "./paths";
-import { fileExists, getUrlParams } from "./utils"
+import { fileExists, getFullPath, getUrlParams } from "./utils"
+import { Options } from "./options";
+import { generateIndexHTML } from "./html";
 
-const vuePlugin: esbuild.Plugin = {
+const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
     name: "vue",
-    async setup(build) {
-        build.initialOptions.define = {
-            ...build.initialOptions.define,
-            "__VUE_OPTIONS_API__": "false",
-            "__VUE_PROD_DEVTOOLS__": "false"
+    async setup({ initialOptions: buildOpts, ...build }) {
+        buildOpts.define = {
+            ...buildOpts.define,
+            "__VUE_OPTIONS_API__": opts.enableOptionsApi ? "true" : "false",
+            "__VUE_PROD_DEVTOOLS__": opts.enableDevTools ? "true" : "false"
         }
 
         await loadRules();
-        
-        build.onResolve({ filter: /.*/ }, async args => {
-            const aliased = replaceRules(args.path);
-            const fullPath = path.isAbsolute(aliased) ? aliased : path.join(process.cwd(), aliased);
 
-            if (!await fileExists(fullPath)) {
-                const possible = [
-                    ".ts",
-                    "/index.ts",
-                    ".js",
-                    "/index.js",
-                ]
+        if (!opts.disableResolving) {
+            build.onResolve({ filter: /.*/ }, async args => {
+                const aliased = replaceRules(args.path);
+                const fullPath = path.isAbsolute(aliased) ? aliased : path.join(process.cwd(), aliased);
 
-                for (const postfix of possible) {
-                    if (await fileExists(fullPath + postfix)) {
-                        return {
-                            path: path.normalize(fullPath + postfix),
-                            namespace: "file"
+                if (!await fileExists(fullPath)) {
+                    const possible = [
+                        ".ts",
+                        "/index.ts",
+                        ".js",
+                        "/index.js",
+                    ]
+
+                    for (const postfix of possible) {
+                        if (await fileExists(fullPath + postfix)) {
+                            return {
+                                path: path.normalize(fullPath + postfix),
+                                namespace: "file"
+                            }
                         }
                     }
+                } else {
+                    return {
+                        path: path.normalize(fullPath),
+                        namespace: "file"
+                    }
                 }
-            } else {
-                return {
-                    path: path.normalize(fullPath),
-                    namespace: "file"
-                }
-            }
-        })
+            })
+        }
 
         // Resolve main ".vue" import
         build.onResolve({ filter: /\.vue/ }, async (args) => {
             const params = getUrlParams(args.path);
 
             return {
-                path: path.isAbsolute(args.path) ? args.path : path.join(args.resolveDir, args.path),
+                path: getFullPath(args),
                 namespace:
                     params.type === "script" ? "sfc-script" :
                     params.type === "template" ? "sfc-template" :
@@ -110,7 +114,7 @@ const vuePlugin: esbuild.Plugin = {
                 const script = sfc.compileScript(descriptor, { id });
                 let code = script.content;
 
-                if (build.initialOptions.sourcemap && script.map) {
+                if (buildOpts.sourcemap && script.map) {
                     const sourceMap = Buffer.from(JSON.stringify(script.map)).toString("base64");
                     
                     code += "\n\n//@ sourceMappingURL=data:application/json;charset=utf-8;base64," + sourceMap;
@@ -195,7 +199,36 @@ const vuePlugin: esbuild.Plugin = {
                 watchFiles: includedFiles
             }
         })
+
+        build.onEnd(result => {
+            if (opts?.generateHTML) {
+                if (typeof opts.generateHTML === "string") {
+                    opts.generateHTML = {
+                        originalFile: opts.generateHTML
+                    }
+                }
+                
+                const outDir = () => buildOpts.outdir
+                    ? buildOpts.outdir
+                    : buildOpts.outfile
+                    ? path.dirname(buildOpts.outfile)
+                    : undefined;
+                
+                if (!opts.generateHTML.trimPath) {
+                    opts.generateHTML.trimPath = outDir();
+                }
+                if (!opts.generateHTML.pathPrefix) {
+                    opts.generateHTML.pathPrefix = "/";
+                }
+                if (!opts.generateHTML.outFile) {
+                    const dir = outDir();
+                    opts.generateHTML.outFile = dir && path.join(dir, "index.html");
+                }
+
+                generateIndexHTML(result, opts.generateHTML);
+            }
+        })
     }
 };
 
-export = vuePlugin;
+export = vuePlugin
