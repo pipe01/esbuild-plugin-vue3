@@ -10,7 +10,8 @@ export async function loadRules() {
         return;
     }
 
-    const tsconfig = JSON.parse((await fs.promises.readFile("tsconfig.json")).toString());
+    //TODO: Find a way to parse the tsconfig json that isn't eval
+    const tsconfig = eval("(" + (await fs.promises.readFile("tsconfig.json")).toString() + ")");
 
     if (!tsconfig?.compilerOptions?.paths) {
         return;
