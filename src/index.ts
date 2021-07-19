@@ -207,23 +207,16 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                         originalFile: opts.generateHTML
                     }
                 }
-                
-                const outDir = () => buildOpts.outdir
+
+                const outDir = buildOpts.outdir
                     ? buildOpts.outdir
                     : buildOpts.outfile
                     ? path.dirname(buildOpts.outfile)
                     : undefined;
                 
-                if (!opts.generateHTML.trimPath) {
-                    opts.generateHTML.trimPath = outDir();
-                }
-                if (!opts.generateHTML.pathPrefix) {
-                    opts.generateHTML.pathPrefix = "/";
-                }
-                if (!opts.generateHTML.outFile) {
-                    const dir = outDir();
-                    opts.generateHTML.outFile = dir && path.join(dir, "index.html");
-                }
+                opts.generateHTML.trimPath ??= outDir;
+                opts.generateHTML.pathPrefix ??= "/";
+                opts.generateHTML.outFile ??= outDir && path.join(outDir, "index.html");
 
                 generateIndexHTML(result, opts.generateHTML);
             }
