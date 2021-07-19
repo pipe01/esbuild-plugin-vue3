@@ -68,16 +68,14 @@ const aliasPlugin = {
       const aliased = replacePrefix(args.path);
       const fullPath = path.isAbsolute(aliased) ? aliased : path.join(args.resolveDir, aliased);
       if (!(yield fileExists(fullPath))) {
-        const tries = [
-          ".ts",
-          ".js",
+        const possible = [
           "/index.ts",
           "/index.js"
         ];
-        for (const post of tries) {
-          if (yield fileExists(fullPath + post)) {
+        for (const postfix of possible) {
+          if (yield fileExists(fullPath + postfix)) {
             return {
-              path: path.normalize(fullPath + post),
+              path: path.normalize(fullPath + postfix),
               namespace: "file"
             };
           }
@@ -143,8 +141,13 @@ const vuePlugin = {
       const { descriptor, id } = args.pluginData;
       if (descriptor.script || descriptor.scriptSetup) {
         const script = sfc.compileScript(descriptor, { id });
+        let code = script.content;
+        if (build.initialOptions.sourcemap && script.map) {
+          const sourceMap = Buffer.from(JSON.stringify(script.map)).toString("base64");
+          code += "\n\n//@ sourceMappingURL=data:application/json;charset=utf-8;base64," + sourceMap;
+        }
         return {
-          contents: script.content,
+          contents: code,
           loader: script.lang === "ts" ? "ts" : "js",
           resolveDir: path.dirname(args.path)
         };
@@ -155,7 +158,7 @@ const vuePlugin = {
       let source = descriptor.template.content;
       if (descriptor.template.lang === "pug") {
         source = pug.render(descriptor.template.content);
-        source = source.replace(/(#.*?|v-else)="\1"/g, "$1");
+        source = source.replace(/(#.*?|v-.*?)="\1"/g, "$1");
       }
       const template = sfc.compileTemplate({
         id,
@@ -215,7 +218,8 @@ const buildOpts = {
   bundle: true,
   outfile: "dist/out.js",
   plugins: [aliasPlugin, vuePlugin],
-  target: "es2015"
+  target: "es2015",
+  sourcemap: true
 };
 if (process.argv.includes("--serve")) {
   esbuild.serve({
@@ -228,6 +232,6 @@ if (process.argv.includes("--serve")) {
     buildOpts.watch = true;
     console.log("Watching for changes");
   }
-  esbuild.build(buildOpts).catch(() => process.exit(1));
+  esbuild.build(buildOpts).catch((o) => console.error(o));
 }
 //# sourceMappingURL=build.mjs.map

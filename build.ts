@@ -16,7 +16,7 @@ function replacePrefix(str: string) {
     return str.replace(prefix, process.cwd() + "/src/");
 }
 
-async function fileExists(path) {
+async function fileExists(path: fs.PathLike) {
     try {
         const stat = await fs.promises.stat(path);
         return stat.isFile();
@@ -28,31 +28,20 @@ async function fileExists(path) {
 const aliasPlugin: esbuild.Plugin = {
     name: "alias",
     setup(build) {
-        // build.onResolve({ filter: prefix }, args => {
-        //     console.error("replace", args.path);
-            
-        //     return {
-        //         path: replacePrefix(args.path),
-        //         namespace: "file"
-        //     }
-        // })
-
         build.onResolve({ filter: /.*/ }, async args => {
             const aliased = replacePrefix(args.path);
             const fullPath = path.isAbsolute(aliased) ? aliased : path.join(args.resolveDir, aliased);
             
             if (!await fileExists(fullPath)) {
-                const tries = [
-                    ".ts",
-                    ".js",
+                const possible = [
                     "/index.ts",
                     "/index.js",
                 ]
 
-                for (const post of tries) {
-                    if (await fileExists(fullPath + post)) {
+                for (const postfix of possible) {
+                    if (await fileExists(fullPath + postfix)) {
                         return {
-                            path: path.normalize(fullPath + post),
+                            path: path.normalize(fullPath + postfix),
                             namespace: "file"
                         }
                     }
@@ -74,7 +63,6 @@ import sass from "sass";
 const vuePlugin: esbuild.Plugin = {
     name: "vue",
     setup(build) {
-
         build.initialOptions.define = {
             ...build.initialOptions.define,
             "__VUE_OPTIONS_API__": "false",
@@ -142,9 +130,16 @@ const vuePlugin: esbuild.Plugin = {
 
             if (descriptor.script || descriptor.scriptSetup) {
                 const script = sfc.compileScript(descriptor, { id });
+                let code = script.content;
+
+                if (build.initialOptions.sourcemap && script.map) {
+                    const sourceMap = Buffer.from(JSON.stringify(script.map)).toString("base64");
+                    
+                    code += "\n\n//@ sourceMappingURL=data:application/json;charset=utf-8;base64," + sourceMap;
+                }
 
                 return {
-                    contents: script.content,
+                    contents: code,
                     loader: script.lang === "ts" ? "ts" : "js",
                     resolveDir: path.dirname(args.path),
                 }
@@ -159,7 +154,7 @@ const vuePlugin: esbuild.Plugin = {
                 source = pug.render(descriptor.template.content);
 
                 // Fix #default="#default" and v-else="v-else"
-                source = source.replace(/(#.*?|v-else)="\1"/g, "$1");
+                source = source.replace(/(#.*?|v-.*?)="\1"/g, "$1");
             }
 
             const template = sfc.compileTemplate({
@@ -225,15 +220,14 @@ const vuePlugin: esbuild.Plugin = {
     }
 };
 
-/**
- * @type import("esbuild").BuildOptions
- */
-const buildOpts: import("esbuild").BuildOptions = {
+const buildOpts: esbuild.BuildOptions = {
     entryPoints: ['src/main-client.ts'],
     bundle: true,
     outfile: 'dist/out.js',
     plugins: [aliasPlugin, vuePlugin],
     target: "es2015",
+    // platform: "node",
+    sourcemap: true,
     // minify: true
 }
 
@@ -250,5 +244,5 @@ if (process.argv.includes("--serve")) {
         console.log("Watching for changes");
     }
 
-    esbuild.build(buildOpts).catch(() => process.exit(1))
+    esbuild.build(buildOpts).catch(o => console.error(o))
 }
