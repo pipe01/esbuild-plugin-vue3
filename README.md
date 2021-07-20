@@ -43,6 +43,7 @@ esbuild.build({
     bundle: true,
     outfile: "dist/app.js",
     entryNames: '[dir]/[name]-[hash]',
+    metafile: true,
     plugins: [vuePlugin({
         generateHTML: "src/index.html"
         // Or:
