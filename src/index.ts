@@ -96,7 +96,9 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 code += `import "${encPath}?type=style&index=${style}";`
             }
 
-            code += `import { render } from "${encPath}?type=template"; script.render = render;`
+            const renderFuncName = opts.renderSSR ? "ssrRender" : "render";
+
+            code += `import { ${renderFuncName} } from "${encPath}?type=template"; script.${renderFuncName} = ${renderFuncName};`
 
             code += `script.__file = ${JSON.stringify(filename)}; script.__scopeId = ${JSON.stringify(id)};`;
             code += "export default script;";
@@ -146,15 +148,38 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 source = source.replace(/(\B#.*?|\bv-.*?)="\1"/g, "$1");
             }
 
-            const template = sfc.compileTemplate({
+            const result = sfc.compileTemplate({
                 id,
                 source,
                 filename: args.path,
-                scoped: descriptor.styles.some((o: any) => o.scoped)
+                scoped: descriptor.styles.some(o => o.scoped),
+                slotted: descriptor.slotted,
+                ssr: opts.renderSSR,
+                ssrCssVars: [],
+                isProd: (process.env.NODE_ENV === "production") || buildOpts.minify,
+                compilerOptions: {
+                    comments: false,
+                    whitespace: "condense"
+                }
             });
 
+            if (result.errors.length > 0) {
+                return {
+                    errors: result.errors.map<esbuild.PartialMessage>(o => typeof o === "string" ? { text: o } : {
+                        text: o.message,
+                        location: o.loc && {
+                            column: o.loc.start.column,
+                            file: descriptor.filename,
+                            line: o.loc.start.line + descriptor.template!.loc.start.line + 1,
+                            lineText: o.loc.source
+                        }
+                    })
+                }
+            }
+
             return {
-                contents: template.code,
+                contents: result.code,
+                warnings: result.tips.map(o => ({ text: o })),
                 loader: "js",
                 resolveDir: path.dirname(args.path),
             }
@@ -164,20 +189,19 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             const { descriptor, index, id } = args.pluginData as { descriptor: sfc.SFCDescriptor, index: number, id: string };
 
             const style: import("@vue/compiler-sfc").SFCStyleBlock = descriptor.styles[index];
-            let source = style.content;
             let includedFiles: string[] = [];
 
-            if (style.lang === "sass" || style.lang === "scss") {
-                const sass = await tryAsync(() => import("sass"), "sass", "SASS style preprocessing");
-
-                const result: import("sass").Result = await new Promise((resolve, reject) => sass.render({
-                    data: source,
-                    indentedSyntax: style.lang === "sass",
+            const result = await sfc.compileStyleAsync({
+                filename: args.path,
+                id,
+                source: style.content,
+                preprocessLang: style.lang as any,
+                preprocessOptions: {
                     includePaths: [
                         path.dirname(args.path)
                     ],
                     importer: [
-                        url => {
+                        (url: string) => {
                             const modulePath = path.join(process.cwd(), "node_modules", url);
 
                             if (fs.existsSync(modulePath)) {
@@ -186,23 +210,30 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
                             return null
                         },
-                        url => ({ file: replaceRules(url) })
+                        (url: string) => ({ file: replaceRules(url) })
                     ]
-                }, (ex, res) => ex ? reject(ex) : resolve(res)));
-
-                includedFiles = result.stats.includedFiles;
-                source = String(result.css);
-            }
-
-            const template = await sfc.compileStyleAsync({
-                filename: args.path,
-                id,
-                source,
+                },
                 scoped: style.scoped,
             });
 
+            if (result.errors.length > 0) {
+                const errors = result.errors as (Error & { column: number; line: number; file: string })[];
+
+                return {
+                    errors: errors.map(o => ({
+                        text: o.message,
+                        location: {
+                            column: o.column,
+                            line: o.file === args.path ? style.loc.start.line + o.line - 1 : o.line,
+                            file: o.file.replace(/\?.*?$/, ""),
+                            namespace: "file"
+                        }
+                    }))
+                }
+            }
+
             return {
-                contents: template.code,
+                contents: result.code,
                 loader: "css",
                 resolveDir: path.dirname(args.path),
                 watchFiles: includedFiles

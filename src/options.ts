@@ -10,6 +10,11 @@ export type Options = {
      * Enable Vue dev tools on production, disabled by default.
      */
     enableDevTools?: boolean;
+
+    /**
+     * If enabled, Vue will emit code for rendering SSR pages.
+     */
+    renderSSR?: boolean;
     
     /**
      * By default, the plugin will resolve paths matching any of the entries in the tsconfig.json "paths" setting.
