@@ -19,6 +19,10 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             "__VUE_PROD_DEVTOOLS__": opts.enableDevTools ? "true" : "false"
         }
 
+        if (opts.generateHTML && !buildOpts.metafile) {
+            buildOpts.metafile = true;
+        }
+
         await loadRules();
 
         if (!opts.disableResolving) {
