@@ -22,3 +22,20 @@ export async function fileExists(path: fs.PathLike) {
 export function getFullPath(args: OnResolveArgs) {
     return path.isAbsolute(args.path) ? args.path : path.join(args.resolveDir, args.path);
 }
+
+export class Lazy<T> {
+    private val: T | undefined;
+
+    constructor(private fn: () => Promise<T>) {
+    }
+    
+    get value(): Promise<T> {
+        if (this.val === undefined) {
+            const ret = this.fn();
+
+            return ret.then(o => this.val = o);
+        }
+
+        return Promise.resolve(this.val);
+    }
+}

@@ -4,11 +4,9 @@ import * as fs from 'fs';
 import * as crypto from "crypto";
 
 import * as sfc from '@vue/compiler-sfc';
-import * as pug from "pug";
-import * as sass from "sass";
 
 import { loadRules, replaceRules } from "./paths";
-import { fileExists, getFullPath, getUrlParams } from "./utils"
+import { fileExists, getFullPath, getUrlParams, Lazy } from "./utils"
 import { Options } from "./options";
 import { generateIndexHTML } from "./html";
 
@@ -20,6 +18,9 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             "__VUE_OPTIONS_API__": opts.enableOptionsApi ? "true" : "false",
             "__VUE_PROD_DEVTOOLS__": opts.enableDevTools ? "true" : "false"
         }
+
+        const pug = new Lazy(() => import("pug"));
+        const sass = new Lazy(() => import("sass"));
 
         await loadRules();
 
@@ -133,7 +134,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             let source = descriptor.template.content;
 
             if (descriptor.template.lang === "pug") {
-                source = pug.render(descriptor.template.content);
+                source = (await pug.value).render(descriptor.template.content);
 
                 // Fix #default="#default" and v-else="v-else"
                 source = source.replace(/(\B#.*?|\bv-.*?)="\1"/g, "$1");
@@ -161,7 +162,9 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             let includedFiles: string[] = [];
 
             if (style.lang === "sass" || style.lang === "scss") {
-                const result: sass.Result = await new Promise((resolve, reject) => sass.render({
+                const sassModule = await sass.value;
+                
+                const result: import("sass").Result = await new Promise((resolve, reject) => sassModule.render({
                     data: source,
                     indentedSyntax: style.lang === "sass",
                     includePaths: [
@@ -200,7 +203,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             }
         })
 
-        build.onEnd(result => {
+        build.onEnd(async result => {
             if (opts?.generateHTML && result.errors.length == 0) {
                 if (typeof opts.generateHTML === "string") {
                     opts.generateHTML = {
@@ -218,7 +221,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 opts.generateHTML.pathPrefix ??= "/";
                 opts.generateHTML.outFile ??= outDir && path.join(outDir, "index.html");
 
-                generateIndexHTML(result, opts.generateHTML, buildOpts.minify ?? false);
+                await generateIndexHTML(result, opts.generateHTML, buildOpts.minify ?? false);
             }
         })
     }

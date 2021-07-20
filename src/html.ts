@@ -1,8 +1,6 @@
-import * as cheerio from "cheerio";
 import { BuildResult } from "esbuild";
 import * as fs from "fs";
 import * as path from "path";
-import { minify, Options as MinifyOptions } from "html-minifier"
 
 export type IndexOptions = {
     /**
@@ -40,10 +38,10 @@ export type IndexOptions = {
     /**
      * When minifying, these options will be passed to html-minifier.
      */
-    minifyOptions?: MinifyOptions;
+    minifyOptions?: import("html-minifier").Options;
 }
 
-export function generateIndexHTML(result: BuildResult, opts: IndexOptions, min: boolean) {
+export async function generateIndexHTML(result: BuildResult, opts: IndexOptions, min: boolean) {
     if (!result.metafile) {
         throw new Error("The \"metafile\" option must be set to true in the build options");
     }
@@ -51,7 +49,10 @@ export function generateIndexHTML(result: BuildResult, opts: IndexOptions, min: 
         throw new Error("No outFile was specified and it could not be inferred from the build options");
     }
 
-    const $ = cheerio.load(fs.readFileSync(opts.originalFile));
+    const cheerio = await import("cheerio");
+    const { minify } = await import("html-minifier")
+
+    const $ = cheerio.load(await fs.promises.readFile(opts.originalFile));
 
     if (opts.preload) {
         for (const item of opts.preload) {
@@ -92,10 +93,10 @@ export function generateIndexHTML(result: BuildResult, opts: IndexOptions, min: 
             collapseWhitespace: true,
             minifyCSS: true,
             removeComments: true,
-            
+
             ...opts.minifyOptions,
         });
     }
 
-    fs.writeFileSync(opts.outFile, html);
+    await fs.promises.writeFile(opts.outFile, html);
 }
