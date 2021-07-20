@@ -6,7 +6,7 @@ import * as crypto from "crypto";
 import * as sfc from '@vue/compiler-sfc';
 
 import { loadRules, replaceRules } from "./paths";
-import { fileExists, getFullPath, getUrlParams, Lazy } from "./utils"
+import { fileExists, getFullPath, getUrlParams } from "./utils"
 import { Options } from "./options";
 import { generateIndexHTML } from "./html";
 
@@ -18,9 +18,6 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             "__VUE_OPTIONS_API__": opts.enableOptionsApi ? "true" : "false",
             "__VUE_PROD_DEVTOOLS__": opts.enableDevTools ? "true" : "false"
         }
-
-        const pug = new Lazy(() => import("pug"));
-        const sass = new Lazy(() => import("sass"));
 
         await loadRules();
 
@@ -134,7 +131,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             let source = descriptor.template.content;
 
             if (descriptor.template.lang === "pug") {
-                source = (await pug.value).render(descriptor.template.content);
+                source = (await import("pug")).render(descriptor.template.content);
 
                 // Fix #default="#default" and v-else="v-else"
                 source = source.replace(/(\B#.*?|\bv-.*?)="\1"/g, "$1");
@@ -162,9 +159,9 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             let includedFiles: string[] = [];
 
             if (style.lang === "sass" || style.lang === "scss") {
-                const sassModule = await sass.value;
+                const sass = await import("sass");
                 
-                const result: import("sass").Result = await new Promise((resolve, reject) => sassModule.render({
+                const result: import("sass").Result = await new Promise((resolve, reject) => sass.render({
                     data: source,
                     indentedSyntax: style.lang === "sass",
                     includePaths: [
