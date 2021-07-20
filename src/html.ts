@@ -1,6 +1,7 @@
 import { BuildResult } from "esbuild";
 import * as fs from "fs";
 import * as path from "path";
+import { tryAsync as tryImport } from "./utils";
 
 export type IndexOptions = {
     /**
@@ -49,7 +50,7 @@ export async function generateIndexHTML(result: BuildResult, opts: IndexOptions,
         throw new Error("No outFile was specified and it could not be inferred from the build options");
     }
     
-    const cheerio = await import("cheerio");
+    const cheerio = await tryImport(() => import("cheerio"), "cheerio", "HTML generation");
 
     const $ = cheerio.load(await fs.promises.readFile(opts.originalFile));
 
@@ -88,8 +89,8 @@ export async function generateIndexHTML(result: BuildResult, opts: IndexOptions,
     let html = $.html();
 
     if (min) {
-        const { minify } = await import("html-minifier")
-        
+        const { minify } = await tryImport(() => import("html-minifier"), "html-minifier", "HTML minification")
+
         html = minify(html, {
             collapseWhitespace: true,
             minifyCSS: true,

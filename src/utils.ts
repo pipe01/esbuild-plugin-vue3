@@ -22,3 +22,11 @@ export async function fileExists(path: fs.PathLike) {
 export function getFullPath(args: OnResolveArgs) {
     return path.isAbsolute(args.path) ? args.path : path.join(args.resolveDir, args.path);
 }
+
+export async function tryAsync<T>(fn: () => Promise<T>, module: string, requiredFor: string) {
+    try {
+        return await fn();
+    } catch (err) {
+        throw new Error(`Package "${module}" is required for ${requiredFor}. Please run "npm i -D ${module}" and try again.`);
+    }
+}
