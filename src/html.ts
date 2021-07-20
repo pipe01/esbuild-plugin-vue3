@@ -73,6 +73,8 @@ export async function generateIndexHTML(result: BuildResult, opts: IndexOptions,
             name = opts.pathPrefix + name;
         }
 
+        name = path.normalize(name);
+
         const ext = path.extname(name);
 
         if (ext === ".js") {
