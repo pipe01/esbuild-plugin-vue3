@@ -87,7 +87,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             if (descriptor.script || descriptor.scriptSetup) {
                 code += `import script from "${encPath}?type=script";`
             } else {
-                code += "let script = {};"
+                code += "const script = {};"
             }
 
             for (const style in descriptor.styles) {
