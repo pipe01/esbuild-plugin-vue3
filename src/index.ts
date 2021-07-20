@@ -106,7 +106,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         })
 
         build.onLoad({ filter: /.*/, namespace: "sfc-script" }, async (args) => {
-            const { descriptor, id } = args.pluginData;
+            const { descriptor, id } = args.pluginData as { descriptor: sfc.SFCDescriptor, id: string };
 
             if (descriptor.script || descriptor.scriptSetup) {
                 const script = sfc.compileScript(descriptor, { id });
@@ -127,7 +127,11 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         })
 
         build.onLoad({ filter: /.*/, namespace: "sfc-template" }, async (args) => {
-            const { descriptor, id } = args.pluginData;
+            const { descriptor, id } = args.pluginData as { descriptor: sfc.SFCDescriptor, id: string };
+            if (!descriptor.template) {
+                throw new Error("Missing template");
+            }
+            
             let source = descriptor.template.content;
 
             if (descriptor.template.lang === "pug") {
@@ -152,7 +156,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         })
 
         build.onLoad({ filter: /.*/, namespace: "sfc-style" }, async (args) => {
-            const { descriptor, index, id } = args.pluginData;
+            const { descriptor, index, id } = args.pluginData as { descriptor: sfc.SFCDescriptor, index: number, id: string };
 
             const style: import("@vue/compiler-sfc").SFCStyleBlock = descriptor.styles[index];
             let source = style.content;
