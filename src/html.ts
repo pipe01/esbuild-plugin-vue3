@@ -26,7 +26,15 @@ export type IndexOptions = {
     /**
      * Add <link rel="preload"> elements to the head.
      */
-    preload?: { href: string; as: string }[];
+    preload?: {
+        href: string;
+        as: string;
+
+        /**
+         * Set link rel to prefetch instead of preload.
+         */
+        prefetch?: boolean;
+    }[];
 }
 
 export function generateIndexHTML(result: BuildResult, opts: IndexOptions) {
@@ -41,7 +49,8 @@ export function generateIndexHTML(result: BuildResult, opts: IndexOptions) {
 
     if (opts.preload) {
         for (const item of opts.preload) {
-            const link = $("<link rel='preload'>")
+            const link = $("<link>")
+            link.attr("rel", item.prefetch ? "prefetch" : "preload");
             link.attr("href", item.href);
             link.attr("as", item.as);
             link.insertAfter($("head :last-child"))
