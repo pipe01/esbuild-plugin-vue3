@@ -14,11 +14,19 @@
   "repository": "github:pipe01/esbuild-plugin-vue3",
   "dependencies": {
     "@vue/compiler-sfc": "^3.1.5",
+    "esbuild": "^0.12.15"
+  },
+  "peerDependencies": {
     "cheerio": "^1.0.0-rc.10",
-    "esbuild": "^0.12.15",
     "html-minifier": "^4.0.0",
     "pug": "^3.0.2",
     "sass": "^1.35.2"
+  },
+  "peerDependenciesMeta": {
+    "cheerio": { "optional": true },
+    "html-minifier": { "optional": true },
+    "pug": { "optional": true },
+    "sass": { "optional": true }
   },
   "devDependencies": {
     "@types/html-minifier": "^4.0.1",
@@ -29,6 +37,6 @@
   },
   "files": [
     "dist/*.js",
-    "dist/index.d.ts"
+    "dist/*.d.ts"
   ]
 }
