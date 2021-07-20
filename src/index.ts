@@ -136,7 +136,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 source = pug.render(descriptor.template.content);
 
                 // Fix #default="#default" and v-else="v-else"
-                source = source.replace(/(#.*?|v-.*?)="\1"/g, "$1");
+                source = source.replace(/(\B#.*?|\bv-.*?)="\1"/g, "$1");
             }
 
             const template = sfc.compileTemplate({
@@ -201,7 +201,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         })
 
         build.onEnd(result => {
-            if (opts?.generateHTML) {
+            if (opts?.generateHTML && result.errors.length == 0) {
                 if (typeof opts.generateHTML === "string") {
                     opts.generateHTML = {
                         originalFile: opts.generateHTML
