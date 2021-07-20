@@ -8,7 +8,7 @@ This plugin is meant to mimick the default [Vue CLI](https://cli.vuejs.org/) beh
 ## Install:
 
 ```
-npm i esbuild-plugin-vue3
+npm i -D esbuild-plugin-vue3
 ```
 
 ## Supported
