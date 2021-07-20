@@ -73,7 +73,7 @@ export async function generateIndexHTML(result: BuildResult, opts: IndexOptions,
             name = opts.pathPrefix + name;
         }
 
-        name = path.normalize(name).replace("\\", "/");
+        name = path.normalize(name).replace(/\\/g, "/");
 
         const ext = path.extname(name);
 
