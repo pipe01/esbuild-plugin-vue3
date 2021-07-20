@@ -48,9 +48,8 @@ export async function generateIndexHTML(result: BuildResult, opts: IndexOptions,
     if (!opts.outFile) {
         throw new Error("No outFile was specified and it could not be inferred from the build options");
     }
-
+    
     const cheerio = await import("cheerio");
-    const { minify } = await import("html-minifier")
 
     const $ = cheerio.load(await fs.promises.readFile(opts.originalFile));
 
@@ -89,6 +88,8 @@ export async function generateIndexHTML(result: BuildResult, opts: IndexOptions,
     let html = $.html();
 
     if (min) {
+        const { minify } = await import("html-minifier")
+        
         html = minify(html, {
             collapseWhitespace: true,
             minifyCSS: true,

@@ -23,10 +23,18 @@
     "sass": "^1.35.2"
   },
   "peerDependenciesMeta": {
-    "cheerio": { "optional": true },
-    "html-minifier": { "optional": true },
-    "pug": { "optional": true },
-    "sass": { "optional": true }
+    "cheerio": {
+      "optional": true
+    },
+    "html-minifier": {
+      "optional": true
+    },
+    "pug": {
+      "optional": true
+    },
+    "sass": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/html-minifier": "^4.0.1",
