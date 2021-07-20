@@ -7,7 +7,7 @@ export type IndexOptions = {
     /**
      * Path to the original HTML file that will be modified.
      */
-    originalFile: string;
+    sourceFile: string;
     
     /**
      * Path where the modified HTML file will be written to. By default this is an index.html file in the outdir or next to the outfile.
@@ -52,7 +52,7 @@ export async function generateIndexHTML(result: BuildResult, opts: IndexOptions,
     
     const cheerio = await tryImport(() => import("cheerio"), "cheerio", "HTML generation");
 
-    const $ = cheerio.load(await fs.promises.readFile(opts.originalFile));
+    const $ = cheerio.load(await fs.promises.readFile(opts.sourceFile));
 
     if (opts.preload) {
         for (const item of opts.preload) {

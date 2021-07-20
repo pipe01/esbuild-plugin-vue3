@@ -209,7 +209,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             if (opts?.generateHTML && result.errors.length == 0) {
                 if (typeof opts.generateHTML === "string") {
                     opts.generateHTML = {
-                        originalFile: opts.generateHTML
+                        sourceFile: opts.generateHTML
                     }
                 }
 
