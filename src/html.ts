@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import { BuildResult } from "esbuild";
 import * as fs from "fs";
 import * as path from "path";
+import { minify, Options as MinifyOptions } from "html-minifier"
 
 export type IndexOptions = {
     /**
@@ -35,9 +36,14 @@ export type IndexOptions = {
          */
         prefetch?: boolean;
     }[];
+
+    /**
+     * When minifying, these options will be passed to html-minifier.
+     */
+    minifyOptions?: MinifyOptions;
 }
 
-export function generateIndexHTML(result: BuildResult, opts: IndexOptions) {
+export function generateIndexHTML(result: BuildResult, opts: IndexOptions, min: boolean) {
     if (!result.metafile) {
         throw new Error("The \"metafile\" option must be set to true in the build options");
     }
@@ -79,5 +85,17 @@ export function generateIndexHTML(result: BuildResult, opts: IndexOptions) {
         }
     }
 
-    fs.writeFileSync(opts.outFile, $.html());
+    let html = $.html();
+
+    if (min) {
+        html = minify(html, {
+            collapseWhitespace: true,
+            minifyCSS: true,
+            removeComments: true,
+            
+            ...opts.minifyOptions,
+        });
+    }
+
+    fs.writeFileSync(opts.outFile, html);
 }

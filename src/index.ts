@@ -218,7 +218,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 opts.generateHTML.pathPrefix ??= "/";
                 opts.generateHTML.outFile ??= outDir && path.join(outDir, "index.html");
 
-                generateIndexHTML(result, opts.generateHTML);
+                generateIndexHTML(result, opts.generateHTML, buildOpts.minify ?? false);
             }
         })
     }
