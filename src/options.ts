@@ -30,4 +30,9 @@ export type Options = {
      * Seed to use when generating random scope IDs.
      */
     randomIdSeed?: string;
+
+    /**
+     * Disable the caching of rendered SFC parts.
+     */
+    disableCache?: boolean;
 }

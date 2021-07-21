@@ -1,12 +1,11 @@
 import * as esbuild from "esbuild";
 import * as path from "path";
 import * as fs from 'fs';
-import * as crypto from "crypto";
 
 import * as sfc from '@vue/compiler-sfc';
 
 import { loadRules, replaceRules } from "./paths";
-import { fileExists, getFullPath, getUrlParams, tryAsync } from "./utils"
+import { AsyncCache, fileExists, getFullPath, getUrlParams, tryAsync } from "./utils"
 import { Options } from "./options";
 import { generateIndexHTML } from "./html";
 import randomBytes from "./random";
@@ -31,6 +30,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         }
 
         const random = randomBytes(opts.randomIdSeed);
+        const cache = new AsyncCache(!opts.disableCache);
 
         if (!opts.disableResolving) {
             build.onResolve({ filter: /.*/ }, async args => {
@@ -80,7 +80,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         });
 
         // Load stub when .vue is requested
-        build.onLoad({ filter: /\.vue$/ }, async args => {
+        build.onLoad({ filter: /\.vue$/ }, (args) => cache.get([args.path, args.namespace], async () => {
             const encPath = args.path.replace(/\\/g, "\\\\");
 
             const source = await fs.promises.readFile(args.path, 'utf8');
@@ -116,9 +116,9 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 pluginData: { descriptor, id },
                 watchFiles: [ args.path ]
             }
-        })
+        }));
 
-        build.onLoad({ filter: /.*/, namespace: "sfc-script" }, async (args) => {
+        build.onLoad({ filter: /.*/, namespace: "sfc-script" }, (args) => cache.get([args.path, args.namespace], async () => {
             const { descriptor, id } = args.pluginData as { descriptor: sfc.SFCDescriptor, id: string };
 
             if (descriptor.script || descriptor.scriptSetup) {
@@ -137,14 +137,14 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                     resolveDir: path.dirname(args.path),
                 }
             }
-        })
+        }));
 
-        build.onLoad({ filter: /.*/, namespace: "sfc-template" }, async (args) => {
+        build.onLoad({ filter: /.*/, namespace: "sfc-template" }, (args) => cache.get([args.path, args.namespace], async () => {
             const { descriptor, id } = args.pluginData as { descriptor: sfc.SFCDescriptor, id: string };
             if (!descriptor.template) {
                 throw new Error("Missing template");
             }
-            
+
             let source = descriptor.template.content;
 
             if (descriptor.template.lang === "pug") {
@@ -190,9 +190,9 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 loader: "js",
                 resolveDir: path.dirname(args.path),
             }
-        })
+        }));
 
-        build.onLoad({ filter: /.*/, namespace: "sfc-style" }, async (args) => {
+        build.onLoad({ filter: /.*/, namespace: "sfc-style" }, (args) => cache.get([args.path, args.namespace], async () => {
             const { descriptor, index, id } = args.pluginData as { descriptor: sfc.SFCDescriptor, index: number, id: string };
 
             const style: import("@vue/compiler-sfc").SFCStyleBlock = descriptor.styles[index];
@@ -245,7 +245,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 resolveDir: path.dirname(args.path),
                 watchFiles: includedFiles
             }
-        })
+        }));
 
         build.onEnd(async result => {
             if (opts?.generateHTML && result.errors.length == 0) {
@@ -267,7 +267,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
                 await generateIndexHTML(result, opts.generateHTML, buildOpts.minify ?? false);
             }
-        })
+        });
     }
 };
 

@@ -30,3 +30,22 @@ export async function tryAsync<T>(fn: () => Promise<T>, module: string, required
         throw new Error(`Package "${module}" is required for ${requiredFor}. Please run "npm i -D ${module}" and try again.`);
     }
 }
+
+export class AsyncCache<TKey = any> {
+    private store: Map<TKey, any> = new Map<TKey, any>();
+
+    constructor(public enabled: boolean = true) {}
+
+    public get<T>(key: TKey, fn: () => Promise<T>): Promise<T> {
+        if (!this.enabled) {
+            return fn();
+        }
+
+        let val = this.store.get(key);
+        if (!val) {
+            return fn().then(o => (this.store.set(key, o), o));
+        }
+
+        return val;
+    }
+}
