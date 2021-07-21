@@ -3,6 +3,7 @@ import * as path from "path";
 import * as fs from 'fs';
 
 import * as sfc from '@vue/compiler-sfc';
+import * as core from '@vue/compiler-core';
 
 import { loadRules, replaceRules } from "./paths";
 import { AsyncCache, fileExists, getFullPath, getUrlParams, tryAsync } from "./utils"
@@ -31,6 +32,24 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
         const random = randomBytes(opts.randomIdSeed);
         const cache = new AsyncCache(!opts.disableCache);
+
+        const transforms: Record<string, core.DirectiveTransform> = {};
+        if (opts.directiveTransforms) {
+            for (const name in opts.directiveTransforms) {
+                if (Object.prototype.hasOwnProperty.call(opts.directiveTransforms, name)) {
+                    const propName = opts.directiveTransforms[name];
+
+                    transforms[name] = dir => ({
+                        props: propName === false ? [] : [{
+                            key: core.createSimpleExpression(JSON.stringify(propName), false),
+                            value: dir.exp ?? core.createSimpleExpression("void 0", false),
+                            loc: dir.loc,
+                            type: 16
+                        }]
+                    })
+                }
+            }
+        }
 
         if (!opts.disableResolving) {
             build.onResolve({ filter: /.*/ }, async args => {
@@ -166,7 +185,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 isProd: (process.env.NODE_ENV === "production") || buildOpts.minify,
                 compilerOptions: {
                     comments: false,
-                    whitespace: "condense"
+                    whitespace: "condense",
+                    directiveTransforms: transforms
                 }
             });
 

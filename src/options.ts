@@ -35,4 +35,12 @@ export type Options = {
      * Disable the caching of rendered SFC parts.
      */
     disableCache?: boolean;
+
+    /**
+     * Custom directives will be transformed according to the value in this object.
+     * 
+     * If the value is a string, a property with that name will be added to the element with the same value as the directive.
+     * If the value is false, no property will be added.
+     */
+    directiveTransforms?: Record<string, string | false>;
 }
