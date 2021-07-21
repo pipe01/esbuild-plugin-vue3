@@ -26,6 +26,10 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
         await loadRules();
 
+        if (typeof opts.randomIdSeed !== "string") {
+            throw new Error("The randomIdSeed option's value must be string");
+        }
+
         const random = randomBytes(opts.randomIdSeed);
 
         if (!opts.disableResolving) {
