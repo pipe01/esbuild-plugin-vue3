@@ -25,4 +25,9 @@ export type Options = {
      * If set, an HTML file will be generated and injected with the build output.
      */
     generateHTML?: IndexOptions | string;
+
+    /**
+     * Seed to use when generating random scope IDs.
+     */
+    randomIdSeed?: string;
 }

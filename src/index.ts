@@ -9,6 +9,7 @@ import { loadRules, replaceRules } from "./paths";
 import { fileExists, getFullPath, getUrlParams, tryAsync } from "./utils"
 import { Options } from "./options";
 import { generateIndexHTML } from "./html";
+import randomBytes from "./random";
 
 const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
     name: "vue",
@@ -24,6 +25,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         }
 
         await loadRules();
+
+        const random = randomBytes(opts.randomIdSeed);
 
         if (!opts.disableResolving) {
             build.onResolve({ filter: /.*/ }, async args => {
@@ -83,7 +86,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 filename
             });
 
-            const id = "data-v-" + crypto.randomBytes(4).toString("hex");
+            const id = "data-v-" + random(4).toString("hex");
             let code = "";
 
             if (descriptor.script || descriptor.scriptSetup) {
