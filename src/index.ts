@@ -126,7 +126,14 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
             code += `import { ${renderFuncName} } from "${encPath}?type=template"; script.${renderFuncName} = ${renderFuncName};`
 
-            code += `script.__file = ${JSON.stringify(filename)}; script.__scopeId = ${JSON.stringify(id)};`;
+            code += `script.__file = ${JSON.stringify(filename)};`;
+            if (descriptor.styles.some(o => o.scoped)) {
+                code += `script.__scopeId = ${JSON.stringify(id)};`;
+            }
+            if (opts.renderSSR) {
+                code += "script.__ssrInlineRender = true;";
+            }
+            
             code += "export default script;";
 
             return {
