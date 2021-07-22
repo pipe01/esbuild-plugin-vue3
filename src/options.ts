@@ -27,9 +27,13 @@ export type Options = {
     generateHTML?: IndexOptions | string;
 
     /**
-     * Seed to use when generating random scope IDs.
+     * Strategy to use when generating IDs for components.
+     * 
+     * If set to "hash", the ID will be derived from the .vue file path.
+     * If set to an object with a "random" property, a random ID will be generated.
+     * If "random" is set to a string, the random generator will be seeded with said string.
      */
-    randomIdSeed?: string;
+    scopeId?: "hash" | { random: true | string };
 
     /**
      * Disable the caching of rendered SFC parts.

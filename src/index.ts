@@ -1,6 +1,7 @@
 import * as esbuild from "esbuild";
 import * as path from "path";
 import * as fs from 'fs';
+import * as crypto from "crypto";
 
 import * as sfc from '@vue/compiler-sfc';
 import * as core from '@vue/compiler-core';
@@ -26,11 +27,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
         await loadRules();
 
-        if (typeof opts.randomIdSeed !== "string") {
-            throw new Error("The randomIdSeed option's value must be string");
-        }
+        const random = randomBytes(typeof opts.scopeId === "object" && typeof opts.scopeId.random === "string" ? opts.scopeId.random : undefined);
 
-        const random = randomBytes(opts.randomIdSeed);
         const cache = new AsyncCache(!opts.disableCache);
 
         const transforms: Record<string, core.DirectiveTransform> = {};
@@ -109,7 +107,11 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 filename
             });
 
-            const id = "data-v-" + random(4).toString("hex");
+            const id = !opts.scopeId || opts.scopeId === "hash"
+                ? crypto.createHash("md5").update(filename).digest().toString("hex").substring(0, 8)
+                : random(4).toString("hex");
+
+            const dataId = "data-v-" + id;
             let code = "";
 
             if (descriptor.script || descriptor.scriptSetup) {
@@ -128,7 +130,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
             code += `script.__file = ${JSON.stringify(filename)};`;
             if (descriptor.styles.some(o => o.scoped)) {
-                code += `script.__scopeId = ${JSON.stringify(id)};`;
+                code += `script.__scopeId = ${JSON.stringify(dataId)};`;
             }
             if (opts.renderSSR) {
                 code += "script.__ssrInlineRender = true;";
@@ -139,7 +141,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             return {
                 contents: code,
                 resolveDir: path.dirname(args.path),
-                pluginData: { descriptor, id },
+                pluginData: { descriptor, id: dataId },
                 watchFiles: [ args.path ]
             }
         }));
@@ -191,8 +193,6 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 ssrCssVars: [],
                 isProd: (process.env.NODE_ENV === "production") || buildOpts.minify,
                 compilerOptions: {
-                    comments: false,
-                    whitespace: "condense",
                     directiveTransforms: transforms
                 }
             });
