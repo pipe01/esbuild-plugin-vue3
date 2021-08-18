@@ -37,14 +37,26 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 if (Object.prototype.hasOwnProperty.call(opts.directiveTransforms, name)) {
                     const propName = opts.directiveTransforms[name];
 
-                    transforms[name] = dir => ({
-                        props: propName === false ? [] : [{
-                            key: core.createSimpleExpression(JSON.stringify(propName), false),
-                            value: dir.exp ?? core.createSimpleExpression("void 0", false),
-                            loc: dir.loc,
-                            type: 16
-                        }]
-                    })
+                    const transformation = (dir: core.DirectiveNode, name: string) => <core.Property>{
+                        key: core.createSimpleExpression(JSON.stringify(name), false),
+                        value: dir.exp ?? core.createSimpleExpression("void 0", false),
+                        loc: dir.loc,
+                        type: 16
+                    }
+
+                    if (typeof propName === "function") {
+                        transforms[name] = (...args) => {
+                            const ret = propName(args[0], args[1], args[2]);
+
+                            return {
+                                props: ret === undefined ? [] : [transformation(args[0], ret)]
+                            }
+                        }
+                    } else {
+                        transforms[name] = dir => ({
+                            props: propName === false ? [] : [transformation(dir, propName)]
+                        })
+                    }
                 }
             }
         }

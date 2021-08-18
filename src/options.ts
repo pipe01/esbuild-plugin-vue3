@@ -1,3 +1,4 @@
+import { DirectiveNode, ElementNode, TransformContext } from "@vue/compiler-core";
 import { IndexOptions } from "./html";
 
 export type Options = {
@@ -44,7 +45,8 @@ export type Options = {
      * Custom directives will be transformed according to the value in this object.
      * 
      * If the value is a string, a property with that name will be added to the element with the same value as the directive.
+     * If the value is a function and it returns a string, the same behaviour as the former case will be performed.
      * If the value is false, no property will be added.
      */
-    directiveTransforms?: Record<string, string | false>;
+    directiveTransforms?: Record<string, string | false | ((dir: DirectiveNode, node: ElementNode, context: TransformContext) => string | undefined)>;
 }
