@@ -12,6 +12,12 @@ import { Options } from "./options";
 import { generateIndexHTML } from "./html";
 import randomBytes from "./random";
 
+type PluginData = {
+    descriptor: sfc.SFCDescriptor;
+    id: string;
+    script?: sfc.SFCScriptBlock;
+}
+
 const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
     name: "vue",
     async setup({ initialOptions: buildOpts, ...build }) {
@@ -115,13 +121,14 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             const source = await fs.promises.readFile(args.path, 'utf8');
             const filename = path.relative(process.cwd(), args.path);
             
-            const { descriptor } = sfc.parse(source, {
-                filename
-            });
-
             const id = !opts.scopeId || opts.scopeId === "hash"
                 ? crypto.createHash("md5").update(filename).digest().toString("hex").substring(0, 8)
                 : random(4).toString("hex");
+
+            const { descriptor } = sfc.parse(source, {
+                filename
+            });
+            const script = (descriptor.script || descriptor.scriptSetup) ? sfc.compileScript(descriptor, { id }) : undefined;
 
             const dataId = "data-v-" + id;
             let code = "";
@@ -153,16 +160,15 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             return {
                 contents: code,
                 resolveDir: path.dirname(args.path),
-                pluginData: { descriptor, id: dataId },
+                pluginData: { descriptor, id: dataId, script } as PluginData,
                 watchFiles: [ args.path ]
             }
         }));
 
         build.onLoad({ filter: /.*/, namespace: "sfc-script" }, (args) => cache.get([args.path, args.namespace], async () => {
-            const { descriptor, id } = args.pluginData as { descriptor: sfc.SFCDescriptor, id: string };
+            const { script } = args.pluginData as PluginData;
 
-            if (descriptor.script || descriptor.scriptSetup) {
-                const script = sfc.compileScript(descriptor, { id });
+            if (script) {
                 let code = script.content;
 
                 if (buildOpts.sourcemap && script.map) {
@@ -180,7 +186,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         }));
 
         build.onLoad({ filter: /.*/, namespace: "sfc-template" }, (args) => cache.get([args.path, args.namespace], async () => {
-            const { descriptor, id } = args.pluginData as { descriptor: sfc.SFCDescriptor, id: string };
+            const { descriptor, id, script } = args.pluginData as PluginData;
             if (!descriptor.template) {
                 throw new Error("Missing template");
             }
@@ -205,7 +211,9 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 ssrCssVars: [],
                 isProd: (process.env.NODE_ENV === "production") || buildOpts.minify,
                 compilerOptions: {
-                    directiveTransforms: transforms
+                    inSSR: opts.renderSSR,
+                    directiveTransforms: transforms,
+                    bindingMetadata: script?.bindings
                 }
             });
 
@@ -232,7 +240,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         }));
 
         build.onLoad({ filter: /.*/, namespace: "sfc-style" }, (args) => cache.get([args.path, args.namespace], async () => {
-            const { descriptor, index, id } = args.pluginData as { descriptor: sfc.SFCDescriptor, index: number, id: string };
+            const { descriptor, index, id } = args.pluginData as PluginData & { index: number };
 
             const style: import("@vue/compiler-sfc").SFCStyleBlock = descriptor.styles[index];
             let includedFiles: string[] = [];

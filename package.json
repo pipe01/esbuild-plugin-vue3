@@ -13,9 +13,9 @@
   "license": "MIT",
   "repository": "github:pipe01/esbuild-plugin-vue3",
   "dependencies": {
-    "@vue/compiler-core": "^3.1.5",
-    "@vue/compiler-sfc": "^3.1.5",
-    "esbuild": "^0.12.15"
+    "@vue/compiler-core": "^3.2.6",
+    "@vue/compiler-sfc": "^3.2.6",
+    "esbuild": "^0.12.22"
   },
   "keywords": [
     "esbuild",
