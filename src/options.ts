@@ -49,4 +49,12 @@ export type Options = {
      * If the value is false, no property will be added.
      */
     directiveTransforms?: Record<string, string | false | ((dir: DirectiveNode, node: ElementNode, context: TransformContext) => string | undefined)>;
+
+    /**
+     * Options and plugins to pass to the PostCSS postprocessor.
+     */
+    postcss?: {
+        options?: any;
+        plugins?: any[];
+    }
 }

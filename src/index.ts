@@ -249,6 +249,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 filename: args.path,
                 id,
                 source: style.content,
+                postcssOptions: opts.postcss?.options,
+                postcssPlugins: opts.postcss?.plugins,
                 preprocessLang: style.lang as any,
                 preprocessOptions: {
                     includePaths: [
