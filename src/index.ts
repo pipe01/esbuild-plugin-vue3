@@ -23,7 +23,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
     async setup({ initialOptions: buildOpts, ...build }) {
         buildOpts.define = {
             ...buildOpts.define,
-            "__VUE_OPTIONS_API__": opts.enableOptionsApi ? "true" : "false",
+            "__VUE_OPTIONS_API__": opts.disableOptionsApi ? "false" : "true",
             "__VUE_PROD_DEVTOOLS__": opts.enableDevTools ? "true" : "false"
         }
 

@@ -3,9 +3,9 @@ import { IndexOptions } from "./html";
 
 export type Options = {
     /**
-     * Vue's options API is disabled by default in order to save space, however you can re-enable it if you need it.
+     * Vue's options API is enabled by default, but it can be disabled in order to save space.
      */
-    enableOptionsApi?: boolean;
+    disableOptionsApi?: boolean;
 
     /**
      * Enable Vue dev tools on production, disabled by default.
