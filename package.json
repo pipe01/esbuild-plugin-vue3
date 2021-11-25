@@ -6,7 +6,8 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build:clean": "rimraf dist",
-    "build:ts": "tsc"
+    "build:ts": "tsc",
+    "prepare": "npm-run-all --serial --print-label build:*"
   },
   "author": "pipe01",
   "license": "MIT",

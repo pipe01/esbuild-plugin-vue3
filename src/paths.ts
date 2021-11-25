@@ -16,7 +16,7 @@ export async function loadRules(opts: Options): Promise<boolean> {
 
     if (opts.pathAliases) {
         for (const path in opts.pathAliases) {
-            const from = replaceWildcard(path, "(.*)");
+            const from = "^" + replaceWildcard(path, "(.*)") + "$";
             const to = replaceWildcard(opts.pathAliases[path], "$1");
 
             rules.push({
@@ -50,7 +50,7 @@ async function loadFromTsconfig() {
            continue;
        }
 
-       const from = replaceWildcard(path, "(.*)");
+       const from = "^" + replaceWildcard(path, "(.*)") + "$";
        const to = replaceWildcard(dests[0], "$1");
 
        rules.push({
