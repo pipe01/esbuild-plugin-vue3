@@ -18,9 +18,16 @@ export type Options = {
     renderSSR?: boolean;
     
     /**
-     * By default, the plugin will resolve paths matching any of the entries in the tsconfig.json "paths" setting.
+     * @deprecated Use pathAliases instead.
      */
     disableResolving?: boolean;
+
+    /**
+     * By default, the plugin will resolve paths matching any of the entries in the tsconfig.json "paths" setting.
+     * If this option is set to false, this behaviour will be disabled. If it is set to an object,
+     * it will use those entries instead of those found in the tsconfig.json file.
+     */
+    pathAliases?: false | Record<string, string>;
 
     /**
      * If set, an HTML file will be generated and injected with the build output.

@@ -31,7 +31,12 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             buildOpts.metafile = true;
         }
 
-        await loadRules();
+        if (opts.disableResolving) {
+            opts.pathAliases = false;
+            build.onStart(() => ({warnings: [{text: "The disableResolving option is deprecated, use pathAliases instead"}]}));
+        }
+
+        const mustReplace = await loadRules(opts);
 
         const random = randomBytes(typeof opts.scopeId === "object" && typeof opts.scopeId.random === "string" ? opts.scopeId.random : undefined);
 
@@ -67,7 +72,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             }
         }
 
-        if (!opts.disableResolving) {
+        if (mustReplace) {
             build.onResolve({ filter: /.*/ }, async args => {
                 const aliased = replaceRules(args.path);
                 const fullPath = path.isAbsolute(aliased) ? aliased : path.join(process.cwd(), aliased);
