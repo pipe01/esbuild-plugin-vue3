@@ -13,16 +13,19 @@ export type IndexOptions = {
      * Path where the modified HTML file will be written to. By default this is an index.html file in the outdir or next to the outfile.
      */
     outFile?: string;
+
     /**
      * Prefix to prepend to all paths.
      */
     pathPrefix?: string;
+
     /**
      * String or regex to remove from all paths, for example to remove a base dir: /^dist\//
      * 
      * By default this is inferred from the build options' outfile or outdir.
      */
     trimPath?: string | RegExp;
+
     /**
      * Add <link rel="preload"> elements to the head.
      */
