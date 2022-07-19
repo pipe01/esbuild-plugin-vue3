@@ -9,7 +9,7 @@ const rules: Rule[] = [];
 /**
  * @returns true if there are any rules to apply, false otherwise.
  */
-export async function loadRules(opts: Options): Promise<boolean> {
+export async function loadRules(opts: Options, tsconfigPath: string): Promise<boolean> {
     if (opts.pathAliases === false) {
         return false;
     }
@@ -25,19 +25,19 @@ export async function loadRules(opts: Options): Promise<boolean> {
             });
         }
     } else {
-        await loadFromTsconfig();
+        await loadFromTsconfig(tsconfigPath);
     }
 
     return rules.length > 0;
 }
 
-async function loadFromTsconfig() {
-    if (!await fileExists("tsconfig.json")) {
+async function loadFromTsconfig(path: string) {
+    if (!await fileExists(path)) {
         return;
     }
 
    //TODO: Find a way to parse the tsconfig json that isn't eval
-   const tsconfig = eval("(" + (await fs.promises.readFile("tsconfig.json")).toString() + ")");
+   const tsconfig = eval("(" + (await fs.promises.readFile(path)).toString() + ")");
 
    if (!tsconfig?.compilerOptions?.paths) {
        return;

@@ -36,7 +36,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             build.onStart(() => ({warnings: [{text: "The disableResolving option is deprecated, use pathAliases instead"}]}));
         }
 
-        const mustReplace = await loadRules(opts);
+        const mustReplace = await loadRules(opts, buildOpts.tsconfig ?? "tsconfig.json");
 
         const random = randomBytes(typeof opts.scopeId === "object" && typeof opts.scopeId.random === "string" ? opts.scopeId.random : undefined);
 
