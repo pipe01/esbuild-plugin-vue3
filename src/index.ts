@@ -218,7 +218,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 compilerOptions: {
                     inSSR: opts.renderSSR,
                     directiveTransforms: transforms,
-                    bindingMetadata: script?.bindings
+                    bindingMetadata: script?.bindings,
+                    ...opts.compilerOptions
                 }
             });
 
@@ -239,7 +240,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             return {
                 contents: result.code,
                 warnings: result.tips.map(o => ({ text: o })),
-                loader: "js",
+                loader: "ts",
                 resolveDir: path.dirname(args.path),
             }
         }));
