@@ -48,7 +48,7 @@ esbuild.build({
         generateHTML: "src/index.html"
         // Or:
         generateHTML: {
-            originalFile: "src/index.html",
+            sourceFile: "src/index.html",
             pathPrefix: "assets/",
             preload: [{ href: "https://example.com/my-external.css", as: "stylesheet" }]
         }
