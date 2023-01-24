@@ -139,7 +139,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             let code = "";
 
             if (descriptor.script || descriptor.scriptSetup) {
-                code += `import script from "${encPath}?type=script";`
+                const src = (descriptor.script && !descriptor.scriptSetup && descriptor.script.src) || encPath
+                code += `import script from "${src}?type=script";`
             } else {
                 code += "const script = {};"
             }
