@@ -63,7 +63,7 @@ export async function generateIndexHTML(result: BuildResult, opts: IndexOptions,
             link.attr("rel", item.prefetch ? "prefetch" : "preload");
             link.attr("href", item.href);
             link.attr("as", item.as);
-            link.insertAfter($("head :last-child"))
+            $("head").append(link)
         }
     }
 
@@ -83,11 +83,12 @@ export async function generateIndexHTML(result: BuildResult, opts: IndexOptions,
         if (ext === ".js") {
             const script = $("<script>");
             script.attr("src", name);
-            script.insertAfter($("body :last-child"));
+            $("body").append(script)
         } else if (ext === ".css") {
             const link = $("<link rel='stylesheet'>")
             link.attr("href", name);
-            link.insertAfter($("head :last-child"))
+            $("head").append(link)
+
         }
     }
 
