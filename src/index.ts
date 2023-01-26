@@ -139,14 +139,14 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             let code = "";
 
             if (descriptor.script || descriptor.scriptSetup) {
-                const src = (descriptor.script && !descriptor.scriptSetup && descriptor.script.src) || encPath
-                code += `import script from "${src}?type=script";`
+                const src = (descriptor.script && !descriptor.scriptSetup && descriptor.script.src) || encPath;
+                code += `import script from "${src}?type=script";`;
             } else {
-                code += "const script = {};"
+                code += "const script = {};";
             }
 
             for (const style in descriptor.styles) {
-                code += `import "${encPath}?type=style&index=${style}";`
+                code += `import "${encPath}?type=style&index=${style}";`;
             }
 
             const renderFuncName = opts.renderSSR ? "ssrRender" : "render";
