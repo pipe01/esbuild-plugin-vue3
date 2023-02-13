@@ -297,14 +297,21 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
             if (opts.cssInline) {
                 const cssText =  result.code;
-                const cssId = 'id-' + id;
-                const contents = `if (!document.getElementById('${cssId}')){const s=document.createElement("style");s.textContent=\`${cssText}\`;s.id='${cssId}';document.head.append(s)}`;
+                const cssId = 'css-' + id;
+                const contents = `
+                    if (!document.getElementById('${cssId}')) {
+                        const el = document.createElement("style");
+                        el.textContent = ${JSON.stringify(cssText)};
+                        el.id = '${cssId}';
+                        document.head.append(el);
+                    }
+                `;
                 return {
-                        contents,
-                        loader: "js",
-                        resolveDir: path.dirname(args.path),
-                        watchFiles: includedFiles
-                    };
+                    contents,
+                    loader: "js",
+                    resolveDir: path.dirname(args.path),
+                    watchFiles: includedFiles
+                };
             }
 
             return {
