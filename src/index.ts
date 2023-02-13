@@ -295,6 +295,18 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 }
             }
 
+            if (opts.cssInline) {
+                const cssText =  result.code;
+                const cssId = 'id-' + id;
+                const contents = `if (!document.getElementById('${cssId}')){const s=document.createElement("style");s.textContent=\`${cssText}\`;s.id='${cssId}';document.head.append(s)}`;
+                return {
+                        contents,
+                        loader: "js",
+                        resolveDir: path.dirname(args.path),
+                        watchFiles: includedFiles
+                    };
+            }
+
             return {
                 contents: result.code,
                 loader: "css",

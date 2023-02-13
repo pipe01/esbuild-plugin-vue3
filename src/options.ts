@@ -66,6 +66,13 @@ export type Options = {
     }
 
     /**
+     * If enabled it will output css of <style> blocks into js file/s.
+     * Otherwise it will generate css files.
+     * By default, generate css file.
+     */
+     cssInline?: boolean;
+
+    /**
      * Option to add custom compiler options for vue sfc
      */
     compilerOptions?: CompilerOptions;
