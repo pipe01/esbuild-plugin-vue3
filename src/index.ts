@@ -36,6 +36,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             build.onStart(() => ({warnings: [{text: "The disableResolving option is deprecated, use pathAliases instead"}]}));
         }
 
+        const generatedCSS: string[] = [];
+
         const mustReplace = await loadRules(opts, buildOpts.tsconfig ?? "tsconfig.json");
 
         const random = randomBytes(typeof opts.scopeId === "object" && typeof opts.scopeId.random === "string" ? opts.scopeId.random : undefined);
@@ -296,6 +298,17 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             }
 
             if (opts.cssInline) {
+                if (opts.generateHTML) {
+                    generatedCSS.push(result.code);
+
+                    // If we are generating HTML all styles will be added to it when building ends,
+                    // so return an empty file here.
+                    return {
+                        contents: "",
+                        loader: "js"
+                    }
+                }
+                
                 const cssText =  result.code;
                 const cssId = 'css-' + id;
                 const contents = `
@@ -340,7 +353,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 opts.generateHTML.pathPrefix ??= "/";
                 opts.generateHTML.outFile ??= outDir && path.join(outDir, "index.html");
 
-                await generateIndexHTML(result, opts.generateHTML, buildOpts.minify ?? false);
+                await generateIndexHTML(result, opts.generateHTML, buildOpts.minify ?? false, opts.cssInline ? generatedCSS : undefined);
             }
         });
     }

@@ -8,7 +8,7 @@ export type IndexOptions = {
      * Path to the original HTML file that will be modified.
      */
     sourceFile: string;
-    
+
     /**
      * Path where the modified HTML file will be written to. By default this is an index.html file in the outdir or next to the outfile.
      */
@@ -45,14 +45,14 @@ export type IndexOptions = {
     minifyOptions?: import("html-minifier").Options;
 }
 
-export async function generateIndexHTML(result: BuildResult, opts: IndexOptions, min: boolean) {
+export async function generateIndexHTML(result: BuildResult, opts: IndexOptions, min: boolean, inlineStyles?: string[]) {
     if (!result.metafile) {
         throw new Error("The \"metafile\" option must be set to true in the build options");
     }
     if (!opts.outFile) {
         throw new Error("No outFile was specified and it could not be inferred from the build options");
     }
-    
+
     const cheerio = await tryImport(() => import("cheerio"), "cheerio", "HTML generation");
 
     const $ = cheerio.load(await fs.promises.readFile(opts.sourceFile));
@@ -88,7 +88,14 @@ export async function generateIndexHTML(result: BuildResult, opts: IndexOptions,
             const link = $("<link rel='stylesheet'>")
             link.attr("href", name);
             $("head").append(link);
+        }
+    }
 
+    if (inlineStyles) {
+        for (const style of inlineStyles) {
+            const el = $("<style>");
+            el.text(style);
+            $("head").append(el);
         }
     }
 

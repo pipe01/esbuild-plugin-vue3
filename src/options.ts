@@ -67,6 +67,8 @@ export type Options = {
 
     /**
      * If enabled, Single File Components' CSS will be combined into the output JS files and added to <head> at runtime.
+     * If generateHTML is also enabled, the CSS <style> blocks will instead be added to the generated HTML file.
+     * 
      * By default, separate CSS files will be generated.
      */
     cssInline?: boolean;
