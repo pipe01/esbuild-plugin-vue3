@@ -259,7 +259,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 postcssOptions: opts.postcss?.options,
                 postcssPlugins: opts.postcss?.plugins,
                 preprocessLang: style.lang as any,
-                preprocessOptions: {
+                preprocessOptions: Object.assign({
                     includePaths: [
                         path.dirname(args.path)
                     ],
@@ -275,7 +275,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                         },
                         (url: string) => ({ file: replaceRules(url) })
                     ]
-                },
+                }, opts.preprocessorOptions),
                 scoped: style.scoped,
             });
 
