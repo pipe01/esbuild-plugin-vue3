@@ -310,15 +310,12 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 }
                 
                 const cssText =  result.code;
-                const cssId = 'css-' + id;
                 const contents = `
-                    if (!document.getElementById('${cssId}')) {
-                        const el = document.createElement("style");
-                        el.textContent = ${JSON.stringify(cssText)};
-                        el.id = '${cssId}';
-                        document.head.append(el);
-                    }
-                `;
+                {
+                    const el = document.createElement("style");
+                    el.textContent = ${JSON.stringify(cssText)};
+                    document.head.append(el);
+                }`;
                 return {
                     contents,
                     loader: "js",
