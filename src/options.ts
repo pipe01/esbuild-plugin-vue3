@@ -68,5 +68,14 @@ export type Options = {
     /**
      * Option to add custom compiler options for vue sfc
      */
-    compilerOptions?: CompilerOptions
+    compilerOptions?: CompilerOptions;
+
+    /**
+     * Option to pass to CSS preprocessor options in the Vue SFC compiler
+     * 
+     * Less: https://lesscss.org/usage/#less-options
+     * 
+     * SCSS: https://sass-lang.com/documentation/js-api/interfaces/Options
+     */
+    preprocessorOptions?: any; // any is the same type as compiler-sfc.d.ts allows it.
 }
