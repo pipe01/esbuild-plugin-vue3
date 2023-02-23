@@ -267,7 +267,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                     ],
                     importer: [
                         (url: string) => {
-                            const modulePath = path.join(process.cwd(), "node_modules", url);
+                            const projectRoot = process.env.npm_config_local_prefix || process.cwd()
+                            const modulePath = path.join(projectRoot, "node_modules", url);
 
                             if (fs.existsSync(modulePath)) {
                                 return { file: modulePath }
