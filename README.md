@@ -23,6 +23,7 @@ npm i -D esbuild-plugin-vue3
 Simple usage, this will resolve all `.vue` imports and load its parts independently. By default path aliases will be loaded from the tsconfig.json file, if any.
 
 ```js
+const esbuild = require("esbuild")
 const vuePlugin = require("esbuild-plugin-vue3")
 
 esbuild.build({
@@ -36,6 +37,7 @@ esbuild.build({
 More advanced usage, generating HTML file:
 
 ```js
+const esbuild = require("esbuild")
 const vuePlugin = require("esbuild-plugin-vue3")
 
 esbuild.build({
