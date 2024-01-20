@@ -3,14 +3,22 @@ import { IndexOptions } from "./html";
 
 export type Options = {
     /**
-     * Vue's options API is enabled by default, but it can be disabled in order to save space.
+     * Disable Options API support. Disabling this will result in smaller bundles,
+     * but may affect compatibility with 3rd party libraries if they rely on Options API.
      */
     disableOptionsApi?: boolean;
 
     /**
-     * Enable Vue dev tools on production, disabled by default.
+     * Enable devtools support in production builds.
+     * This will result in more code included in the bundle, so it is recommended to only enable this for debugging purposes.
      */
     enableDevTools?: boolean;
+
+    /**
+     * Enable devtools support in production builds.
+     * This will result in more code included in the bundle, so it is recommended to only enable this for debugging purposes.
+     */
+    enableHydrationMismatchDetails?: boolean;
 
     /**
      * If enabled, Vue will emit code for rendering SSR pages.

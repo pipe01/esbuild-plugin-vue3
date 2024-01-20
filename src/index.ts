@@ -24,7 +24,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         buildOpts.define = {
             ...buildOpts.define,
             "__VUE_OPTIONS_API__": opts.disableOptionsApi ? "false" : "true",
-            "__VUE_PROD_DEVTOOLS__": opts.enableDevTools ? "true" : "false"
+            "__VUE_PROD_DEVTOOLS__": opts.enableDevTools ? "true" : "false",
+            "__VUE_PROD_HYDRATION_MISMATCH_DETAILS__": opts.enableHydrationMismatchDetails ? "true" : "false",
         }
 
         if (opts.generateHTML && !buildOpts.metafile) {
