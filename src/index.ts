@@ -3,6 +3,8 @@ import * as path from "path";
 import * as fs from 'fs';
 import * as crypto from "crypto";
 
+import ts from "typescript";
+
 import * as sfc from '@vue/compiler-sfc';
 import * as core from '@vue/compiler-core';
 
@@ -136,7 +138,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             const { descriptor } = sfc.parse(source, {
                 filename
             });
-            const script = (descriptor.script || descriptor.scriptSetup) ? sfc.compileScript(descriptor, { id }) : undefined;
+            const script = (descriptor.script || descriptor.scriptSetup) ? sfc.compileScript(descriptor, { id, fs: ts.sys }) : undefined;
 
             const dataId = "data-v-" + id;
             let code = "";
