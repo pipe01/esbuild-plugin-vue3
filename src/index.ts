@@ -156,7 +156,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
             const renderFuncName = opts.renderSSR ? "ssrRender" : "render";
 
-            code += `import { ${renderFuncName} } from "${encPath}?type=template"; script.${renderFuncName} = ${renderFuncName};`
+
+            descriptor.template && (code += `import { ${renderFuncName} } from "${encPath}?type=template"; script.${renderFuncName} = ${renderFuncName};`)
 
             code += `script.__file = ${JSON.stringify(filename)};`;
             if (descriptor.styles.some(o => o.scoped)) {
@@ -199,7 +200,10 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         build.onLoad({ filter: /.*/, namespace: "sfc-template" }, (args) => cache.get([args.path, args.namespace], async () => {
             const { descriptor, id, script } = args.pluginData as PluginData;
             if (!descriptor.template) {
-                throw new Error("Missing template");
+                return {
+                    loader: 'js',
+                    contents: ''
+                }
             }
 
             let source = descriptor.template.content;
