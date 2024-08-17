@@ -156,7 +156,6 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
             const renderFuncName = opts.renderSSR ? "ssrRender" : "render";
 
-
             descriptor.template && (code += `import { ${renderFuncName} } from "${encPath}?type=template"; script.${renderFuncName} = ${renderFuncName};`)
 
             code += `script.__file = ${JSON.stringify(filename)};`;
@@ -201,8 +200,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             const { descriptor, id, script } = args.pluginData as PluginData;
             if (!descriptor.template) {
                 return {
-                    loader: 'js',
-                    contents: ''
+                    loader: "js",
+                    contents: ""
                 }
             }
 
