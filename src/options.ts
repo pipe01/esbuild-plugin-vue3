@@ -1,6 +1,18 @@
 import { CompilerOptions, DirectiveNode, ElementNode, TransformContext } from "@vue/compiler-core";
 import { IndexOptions } from "./html";
 
+interface RawSourceMap {
+    file?: string
+    sourceRoot?: string
+    version: string
+    sources: string[]
+    names: string[]
+    sourcesContent?: string[]
+    mappings: string
+}
+
+type PreprocessLang = 'less' | 'sass' | 'scss' | 'styl' | 'stylus'
+
 export type Options = {
     /**
      * Disable Options API support. Disabling this will result in smaller bundles,
@@ -92,6 +104,30 @@ export type Options = {
      * Less: https://lesscss.org/usage/#less-options
      * 
      * SCSS: https://sass-lang.com/documentation/js-api/interfaces/Options
+     * 
+     * With version 0.4.3,you can now pass preprocessCustomRequire,
+     * this option is needed when this plugin is used on browser and
+     * you use a supported lang attribute on style tag.
+     * Check the links down below in order to understand what you need to pass
+     * https://github.com/vuejs/vue/blob/main/packages/compiler-sfc/src/compileStyle.ts 
+     * https://github.com/vuejs/vue/blob/main/packages/compiler-sfc/src/stylePreprocessors.ts
      */
-    preprocessorOptions?: any; // any is the same type as compiler-sfc.d.ts allows it.
+    preprocessorOptions?: {
+        source: string
+        filename: string
+        id: string
+        scoped?: boolean
+        trim?: boolean
+        isProd?: boolean
+        inMap?: RawSourceMap
+        preprocessLang?: PreprocessLang
+        preprocessOptions?: any
+        preprocessCustomRequire?: (id: string) => any
+        postcssOptions?: any
+        postcssPlugins?: any[]
+        /**
+         * @deprecated use `inMap` instead.
+         */
+        map?: RawSourceMap
+    } // types are taken from https://github.com/vuejs/core/tree/main/packages
 }
