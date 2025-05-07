@@ -297,7 +297,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                         location: {
                             column: o.column,
                             line: o.file === args.path ? style.loc.start.line + o.line - 1 : o.line,
-                            file: o.file.replace(/\?.*?$/, ""),
+                            file: o.file?.replace(/\?.*?$/, "") ?? "<unknown>",
                             namespace: "file"
                         }
                     }))
