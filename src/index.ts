@@ -285,6 +285,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                         (url: string) => ({ file: replaceRules(url) })
                     ]
                 }, opts.preprocessorOptions),
+                preprocessCustomRequire : opts.preprocessorOptions ? opts.preprocessorOptions.preprocessCustomRequire : undefined,
                 scoped: style.scoped,
             });
 
