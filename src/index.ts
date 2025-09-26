@@ -2,6 +2,7 @@ import * as esbuild from "esbuild";
 import * as path from "path";
 import * as fs from 'fs';
 import * as crypto from "crypto";
+import { pathToFileURL } from 'url';
 
 import ts from "typescript";
 
@@ -271,19 +272,19 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                     includePaths: [
                         path.dirname(args.path)
                     ],
-                    importer: [
-                        (url: string) => {
+                    importer: {
+                        findFileUrl(url: string) {
                             const projectRoot = process.env.npm_config_local_prefix || process.cwd()
-                            const modulePath = path.join(projectRoot, "node_modules", url);
+                            const modulePath = path.join(projectRoot, "node_modules", url)
 
-                            if (fs.existsSync(modulePath)) {
-                                return { file: modulePath }
-                            }
+                            if (fs.existsSync(modulePath)) return pathToFileURL(modulePath)
+
+                            const replacedPath = replaceRules(url);
+                            if (fs.existsSync(replacedPath)) return pathToFileURL(replacedPath)
 
                             return null
                         },
-                        (url: string) => ({ file: replaceRules(url) })
-                    ]
+                    },
                 }, opts.preprocessorOptions),
                 scoped: style.scoped,
             });
