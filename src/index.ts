@@ -269,8 +269,9 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 postcssPlugins: opts.postcss?.plugins,
                 preprocessLang: style.lang as any,
                 preprocessOptions: Object.assign({
-                    includePaths: [
-                        path.dirname(args.path)
+                    loadPaths: [
+                        path.dirname(args.path),
+                        path.resolve(process.cwd(), 'node_modules')
                     ],
                     importer: {
                         findFileUrl(url: string) {
