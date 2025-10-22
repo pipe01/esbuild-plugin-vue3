@@ -48,6 +48,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
         const cache = new AsyncCache(!opts.disableCache);
 
+        const projectRoot = process.env.npm_config_local_prefix || process.cwd();
+
         const transforms: Record<string, core.DirectiveTransform> = {};
         if (opts.directiveTransforms) {
             for (const name in opts.directiveTransforms) {
@@ -271,11 +273,10 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 preprocessOptions: Object.assign({
                     loadPaths: [
                         path.dirname(args.path),
-                        path.resolve(process.cwd(), 'node_modules')
+                        path.resolve(projectRoot, "node_modules"),
                     ],
                     importer: {
                         findFileUrl(url: string) {
-                            const projectRoot = process.env.npm_config_local_prefix || process.cwd()
                             const modulePath = path.join(projectRoot, "node_modules", url)
 
                             if (fs.existsSync(modulePath)) return pathToFileURL(modulePath)
