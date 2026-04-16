@@ -9,7 +9,12 @@ import ts from "typescript";
 import * as sfc from '@vue/compiler-sfc';
 import * as core from '@vue/compiler-core';
 
-import { loadRules, replaceRules } from "./paths";
+// Register TypeScript with compiler-sfc so it can resolve imported types
+// in defineProps/defineEmits. The vue/compiler-sfc wrapper normally does this,
+// but the plugin imports @vue/compiler-sfc directly.
+sfc.registerTS(() => ts);
+
+import { PathResolver } from "./paths";
 import { AsyncCache, fileExists, getFullPath, getUrlParams, tryAsync } from "./utils"
 import { Options } from "./options";
 import { generateIndexHTML } from "./html";
@@ -42,7 +47,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
         const generatedCSS: string[] = [];
 
-        const mustReplace = await loadRules(opts, buildOpts.tsconfig ?? "tsconfig.json");
+        const resolver = new PathResolver();
+        const mustReplace = await resolver.init(opts, buildOpts.tsconfig ?? "tsconfig.json");
 
         const random = randomBytes(typeof opts.scopeId === "object" && typeof opts.scopeId.random === "string" ? opts.scopeId.random : undefined);
 
@@ -82,7 +88,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
         if (mustReplace) {
             build.onResolve({ filter: /.*/ }, async args => {
-                const aliased = replaceRules(args.path);
+                const aliased = resolver.replaceRules(args.path);
                 const fullPath = path.isAbsolute(aliased) ? aliased : path.join(process.cwd(), aliased);
 
                 if (!await fileExists(fullPath)) {
@@ -128,18 +134,21 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
         });
 
         // Load stub when .vue is requested
-        build.onLoad({ filter: /\.vue$/ }, (args) => cache.get([args.path, args.namespace], async () => {
+        build.onLoad({ filter: /\.vue$/ }, (args) => cache.get(args.path + "\0file", async () => {
             const encPath = args.path.replace(/\\/g, "\\\\");
 
             const source = await fs.promises.readFile(args.path, 'utf8');
-            const filename = path.relative(process.cwd(), args.path);
-            
+            // Use absolute path for SFC compilation so that @vue/compiler-sfc
+            // can walk up the directory tree to find tsconfig.json for type resolution.
+            const absPath = path.resolve(args.path);
+            const relFilename = path.relative(process.cwd(), args.path);
+
             const id = !opts.scopeId || opts.scopeId === "hash"
-                ? crypto.createHash("md5").update(filename).digest().toString("hex").substring(0, 8)
+                ? crypto.createHash("md5").update(relFilename).digest().toString("hex").substring(0, 8)
                 : random(4).toString("hex");
 
             const { descriptor } = sfc.parse(source, {
-                filename
+                filename: absPath
             });
             const script = (descriptor.script || descriptor.scriptSetup) ? sfc.compileScript(descriptor, { id, fs: ts.sys }) : undefined;
 
@@ -153,22 +162,22 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 code += "const script = {};";
             }
 
-            for (const style in descriptor.styles) {
-                code += `import "${encPath}?type=style&index=${style}";`;
+            for (let i = 0; i < descriptor.styles.length; i++) {
+                code += `import "${encPath}?type=style&index=${i}";`;
             }
 
             const renderFuncName = opts.renderSSR ? "ssrRender" : "render";
 
             descriptor.template && (code += `import { ${renderFuncName} } from "${encPath}?type=template"; script.${renderFuncName} = ${renderFuncName};`)
 
-            code += `script.__file = ${JSON.stringify(filename)};`;
+            code += `script.__file = ${JSON.stringify(relFilename)};`;
             if (descriptor.styles.some(o => o.scoped)) {
                 code += `script.__scopeId = ${JSON.stringify(dataId)};`;
             }
             if (opts.renderSSR) {
                 code += "script.__ssrInlineRender = true;";
             }
-            
+
             code += "export default script;";
 
             return {
@@ -179,7 +188,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             }
         }));
 
-        build.onLoad({ filter: /.*/, namespace: "sfc-script" }, (args) => cache.get([args.path, args.namespace], async () => {
+        build.onLoad({ filter: /.*/, namespace: "sfc-script" }, (args) => cache.get(args.path + "\0sfc-script", async () => {
             const { script } = args.pluginData as PluginData;
 
             if (script) {
@@ -187,8 +196,8 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
                 if (buildOpts.sourcemap && script.map) {
                     const sourceMap = Buffer.from(JSON.stringify(script.map)).toString("base64");
-                    
-                    code += "\n\n//@ sourceMappingURL=data:application/json;charset=utf-8;base64," + sourceMap;
+
+                    code += "\n\n//# sourceMappingURL=data:application/json;charset=utf-8;base64," + sourceMap;
                 }
 
                 return {
@@ -199,7 +208,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             }
         }));
 
-        build.onLoad({ filter: /.*/, namespace: "sfc-template" }, (args) => cache.get([args.path, args.namespace], async () => {
+        build.onLoad({ filter: /.*/, namespace: "sfc-template" }, (args) => cache.get(args.path + "\0sfc-template", async () => {
             const { descriptor, id, script } = args.pluginData as PluginData;
             if (!descriptor.template) {
                 return {
@@ -257,11 +266,10 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
             }
         }));
 
-        build.onLoad({ filter: /.*/, namespace: "sfc-style" }, (args) => cache.get([args.path, args.namespace], async () => {
+        build.onLoad({ filter: /.*/, namespace: "sfc-style" }, (args) => cache.get(args.path + "\0sfc-style\0" + (args.pluginData as any).index, async () => {
             const { descriptor, index, id } = args.pluginData as PluginData & { index: number };
 
             const style: import("@vue/compiler-sfc").SFCStyleBlock = descriptor.styles[index];
-            let includedFiles: string[] = [];
 
             const result = await sfc.compileStyleAsync({
                 filename: args.path,
@@ -281,7 +289,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
 
                             if (fs.existsSync(modulePath)) return pathToFileURL(modulePath)
 
-                            const replacedPath = replaceRules(url);
+                            const replacedPath = resolver.replaceRules(url);
                             if (fs.existsSync(replacedPath)) return pathToFileURL(replacedPath)
 
                             return null
@@ -307,6 +315,9 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                 }
             }
 
+            // Collect files imported by the preprocessor for watch mode
+            const includedFiles = result.dependencies ? Array.from(result.dependencies) : [];
+
             if (opts.cssInline) {
                 if (opts.generateHTML) {
                     generatedCSS.push(result.code);
@@ -318,7 +329,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                         loader: "js"
                     }
                 }
-                
+
                 const cssText =  result.code;
                 const contents = `
                 {
@@ -355,7 +366,7 @@ const vuePlugin = (opts: Options = {}) => <esbuild.Plugin>{
                     : buildOpts.outfile
                     ? path.dirname(buildOpts.outfile)
                     : undefined;
-                
+
                 opts.generateHTML.trimPath ??= outDir;
                 opts.generateHTML.pathPrefix ??= "/";
                 opts.generateHTML.outFile ??= outDir && path.join(outDir, "index.html");

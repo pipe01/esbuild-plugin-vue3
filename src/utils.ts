@@ -3,16 +3,19 @@ import { OnResolveArgs } from "esbuild";
 import * as path from "path";
 
 export function getUrlParams(search: string): Record<string, string> {
-    let hashes = search.slice(search.indexOf('?') + 1).split('&')
-    return hashes.reduce((params, hash) => {
-        let [key, val] = hash.split('=')
-        return Object.assign(params, {[key]: decodeURIComponent(val)})
-    }, {})
+    const idx = search.indexOf('?');
+    if (idx === -1) return {};
+
+    const hashes = search.slice(idx + 1).split('&');
+    return hashes.reduce((params: Record<string, string>, hash) => {
+        const [key, val] = hash.split('=');
+        return Object.assign(params, {[key]: decodeURIComponent(val)});
+    }, {});
 }
 
-export async function fileExists(path: fs.PathLike) {
+export async function fileExists(filePath: fs.PathLike) {
     try {
-        const stat = await fs.promises.stat(path);
+        const stat = await fs.promises.stat(filePath);
         return stat.isFile();
     } catch (err) {
         return false;
@@ -31,17 +34,17 @@ export async function tryAsync<T>(fn: () => Promise<T>, module: string, required
     }
 }
 
-export class AsyncCache<TKey = any> {
-    private store: Map<TKey, any> = new Map<TKey, any>();
+export class AsyncCache {
+    private store: Map<string, any> = new Map();
 
     constructor(public enabled: boolean = true) {}
 
-    public get<T>(key: TKey, fn: () => Promise<T>): Promise<T> {
+    public get<T>(key: string, fn: () => Promise<T>): Promise<T> {
         if (!this.enabled) {
             return fn();
         }
 
-        let val = this.store.get(key);
+        const val = this.store.get(key);
         if (!val) {
             return fn().then(o => (this.store.set(key, o), o));
         }
